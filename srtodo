@@ -1,0 +1,57 @@
+#! /bin/bash
+
+#simple todo list for conky  writen by saeed alijani
+
+re='^[0-9]+$'
+
+if test "$1" = "conky"; then
+    conky -c ~/.srtodo/todo_conkyrc &
+fi
+
+if test "$1" = "add"; then
+    if test `echo $2 | sed -r 's/(.)[^.]*\.?/\L\1/g'` = "@" ||
+    test `echo $2 | sed -r 's/(.)[^.]*\.?/\L\1/g'` = "%" ||
+    test `echo $2 | sed -r 's/(.)[^.]*\.?/\L\1/g'` = "_"  ;then
+          echo  $2 > ~/.srtodo/temp
+          cat ~/.srtodo/list ~/.srtodo/temp > ~/.srtodo/list.tmp
+          cp ~/.srtodo/list.tmp ~/.srtodo/list
+          rm ~/.srtodo/temp
+    fi
+fi
+
+if test "$1" = "remove" && [[ $2 =~ $re ]]; then
+   number=$2"d"
+   sed $number ~/.srtodo/list > ~/.srtodo/list.tmp
+   cp ~/.srtodo/list.tmp ~/.srtodo/list
+fi
+
+if test "$1" = "change" && [[ $2 =~ $re ]]   ; then    
+   if test "$3" = "today"; then
+       taskp="s/^./_/"
+   elif test "$3" = "other";then
+       taskp="s/^./@/"
+   elif test "$3" = "week";then
+       taskp="s/^./%/"
+   fi
+   
+   if test $3 = 'today' || test $3 = 'week' || test $3 = 'other'; then
+      echo `cat -n ~/.srtodo/list | grep ${2} | sed 's/^.......//' | sed $taskp` > ~/.srtodo/temp
+      number=$2"d"
+      sed $number ~/.srtodo/list > ~/.srtodo/list.tmp
+      cat ~/.srtodo/list.tmp ~/.srtodo/temp > ~/.srtodo/list
+      rm ~/.srtodo/temp
+    fi
+fi
+
+if test "$1" = "show"; then
+    echo ""
+    cat ~/.srtodo/list | grep -n "_" | sed 's/[_]/Today tasks : /' | sed 's/[:]/: /'
+    cat ~/.srtodo/list | grep -n "%" | sed 's/[%]/Week tasks  : /' | sed 's/[:]/: /'
+    cat ~/.srtodo/list | grep -n "@" | sed 's/[@]/Other tasks : /' | sed 's/[:]/: /'
+    echo ""
+fi
+
+if test "$1" = "clear"; then
+    rm ~/.srtodo/list
+    touch ~/.srtodo/list
+fi
